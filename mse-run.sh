@@ -12,7 +12,7 @@ usage() {
     echo "Example (3): $0 --size 8G --code /tmp/app.tar --no-ssl --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
     echo ""
     echo "Arguments:"
-    echo -e "\t--dry-run\tallow to compute MRENCLAVE value from a non-sgx machine"
+    echo -e "\t--dry-run\tallow to compute MRENCLAVE value from a non-SGX machine"
     exit 1
 }
 
@@ -135,8 +135,17 @@ export PYTHONDONTWRITEBYTECODE=1
 # Other directory for __pycache__ folders
 export PYTHONPYCACHEPREFIX=/tmp
 
-echo "Untar the code..."
 mkdir -p "$APP_DIR"
+
+# Create USER Data space (5 GB)
+USER_DATA_IMG="/opt/user_data.img"
+if [ ! -f $USER_DATA_IMG ]; then
+    dd if=/dev/zero of=$USER_DATA_IMG bs=1M count=5120
+    mkfs.ext4 $USER_DATA_IMG
+fi
+mount -t ext4 -o loop $USER_DATA_IMG "$APP_DIR"
+
+echo "Untar the code..."
 tar xvf "$CODE_TARBALL" -C "$APP_DIR"
 
 # Install dependencies
@@ -179,7 +188,7 @@ echo "Generating the enclave..."
 
 if [ $DRY_RUN -eq 0 ]; then
     if ! [ -e "/dev/sgx_enclave" ]; then
-        echo "You are not running on an sgx machine"
+        echo "You are not running on an SGX machine"
         echo "If you want to compute the MR_ENCLAVE, re-run with --dry-run parameter"
         exit 1
     fi
