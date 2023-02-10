@@ -3,7 +3,7 @@
 set -e
 
 usage() {
-    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --self-signed <expiration_timestamp> | --no-ssl) --code <tarball_path> --host <host> --application <module:application> --uuid <uuid> [--timeout <timeout_timestamp>] [--dry-run] "
+    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --self-signed <expiration_timestamp> | --no-ssl) --code <tarball_path> --host <host> --application <module:application> --uuid <uuid> [--timeout <timeout_timestamp>] [--dry-run] [--memory] "
     echo ""
     echo "Example (1): $0 --size 8G --code /tmp/app.tar --self-signed 1669155711 --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
     echo ""
@@ -38,6 +38,7 @@ set_default_variables() {
     CERT_PATH="$APP_DIR/fullchain.pem"
     SGX_SIGNER_KEY="$HOME/.config/gramine/enclave-key.pem"
     DRY_RUN=0
+    MEMORY=0
     TIMEOUT_DATE=""
     UUID=""
 }
@@ -102,6 +103,11 @@ parse_args() {
 
             --dry-run)
             DRY_RUN=1
+            shift # past argument
+            ;;
+
+            --memory)
+            MEMORY=1
             shift # past argument
             ;;
 
@@ -187,6 +193,10 @@ if [ $DRY_RUN -eq 0 ]; then
     # Build the gramine program
     make clean && make SGX=1 DEBUG="$DEBUG" ENCLAVE_SIZE="$ENCLAVE_SIZE" APP_DIR="$APP_DIR" SGX_SIGNER_KEY="$SGX_SIGNER_KEY"
 
+    if [ $MEMORY -eq 1 ]; then
+        mse-memory python.manifest.sgx
+    fi
+
     # Start the enclave
     if [ -z "$TIMEOUT_DATE" ]; then
         # Forever
@@ -202,4 +212,8 @@ else
     gramine-sgx-gen-private-key
     # Compile for the output including MRENCLAVE
     make clean && make SGX=1 DEBUG="$DEBUG" ENCLAVE_SIZE="$ENCLAVE_SIZE" APP_DIR="$APP_DIR" SGX_SIGNER_KEY="$SGX_SIGNER_KEY"
+
+    if [ $MEMORY -eq 1 ]; then
+        mse-memory python.manifest.sgx
+    fi
 fi

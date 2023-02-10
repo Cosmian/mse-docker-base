@@ -75,3 +75,4 @@ COPY Makefile .
 COPY python.manifest.template .
 COPY mse-run.sh /usr/local/bin/mse-run
 COPY mse-test.sh /usr/local/bin/mse-test
+COPY mse-memory.py /usr/local/bin/mse-memory

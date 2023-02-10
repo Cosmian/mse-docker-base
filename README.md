@@ -133,3 +133,25 @@ $ curl http://127.0.0.1:5000
 ```
 
 To use your `secrets.json`, just add `-v secrets.json:/root/.cache/mse/secrets.json` to mount the file.
+
+
+## Determine the enclave memory size of your image
+
+Some files contained in the docker are mounted into the enclave: libs, etc. 
+These files takes some memory spaces from the enclave size you have declared. The remaining space is the effective memory your app can use.
+
+You can compute the effective memory by adding `--memory` in the previous commands. For example:
+
+```console
+$ docker run --rm \
+    -v /tmp/app.tar:/tmp/app.tar \
+    --entrypoint mse-run \
+    mse-flask:2.2.2 --size 8G \
+                    --code /tmp/app.tar \
+                    --host localhost \
+                    --application app:app \
+                    --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15 \
+                    --self-signed 1769155711 \
+                    --dry-run
+                    --memory
+```
