@@ -1,3 +1,38 @@
+# Build gramine from main branch
+FROM ubuntu:20.04 as gramine
+
+USER root
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /root
+
+RUN apt-get update && apt-get install --no-install-recommends -qq -y\
+    git \
+    build-essential \
+    autoconf \
+    bison \
+    gawk \
+    nasm \
+    ninja-build \
+    pkg-config \
+    python3 \
+    python3-click \
+    python3-jinja2 \
+    python3-pip \
+    python3-pyelftools \
+    wget \
+    linux-headers-$(uname -r) && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    python3 -m pip install 'meson>=0.56' 'tomli>=1.1.0' 'tomli-w>=0.4.0'
+
+# TODO: specify the proper commit to checkout
+RUN git clone https://github.com/gramineproject/gramine
+WORKDIR /root/gramine
+RUN meson setup build/ --buildtype=release -Ddirect=enabled -Dsgx=enabled && \
+    ninja -C build/ && \
+    ninja -C build/ install
+
+# Build the final image
 FROM ubuntu:20.04
 
 USER root
@@ -21,6 +56,9 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y \
     pkg-config \
     python3 \
     python3-pip \
+    python3-click \
+    python3-jinja2 \
+    python3-pyelftools \
     git \
     gnupg \
     ca-certificates \
@@ -29,19 +67,19 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y \
     libsodium-dev \
     && apt-get -y -q upgrade \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Gramine APT repository with public key
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ focal main" >> /etc/apt/sources.list.d/gramine.list \
-    && curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install 'tomli>=1.1.0' 'tomli-w>=0.4.0'
 
 # Intel SGX APT repository with public key
 RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" >> /etc/apt/sources.list.d/intel-sgx.list \
     && curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
 
-# Install Gramine and Intel SGX dependencies
+COPY --from=gramine /usr/local/bin/gramine-* /usr/bin/
+COPY --from=gramine /usr/local/lib/python3.8/dist-packages/graminelibos  /usr/local/lib/python3.8/dist-packages/graminelibos
+COPY --from=gramine /usr/local/lib/x86_64-linux-gnu/gramine/ /usr/local/lib/x86_64-linux-gnu/gramine/
+
+# Install Intel SGX dependencies
 RUN apt-get update && apt-get install --no-install-recommends -qq -y \
-    gramine \
     libsgx-launch \
     libsgx-urts \
     libsgx-quote-ex \
