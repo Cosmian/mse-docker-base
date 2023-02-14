@@ -5,9 +5,13 @@ USER root
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /root
 
-RUN apt-get update && apt-get install --no-install-recommends -qq -y\
+RUN apt-get update && apt-get install --no-install-recommends -qq -y \
     git \
     build-essential \
+    protobuf-compiler \
+    libprotobuf-dev \
+    libprotobuf-c-dev \
+    protobuf-c-compiler \
     autoconf \
     bison \
     gawk \
@@ -15,9 +19,11 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y\
     ninja-build \
     pkg-config \
     python3 \
+    python3-cryptography \
     python3-click \
     python3-jinja2 \
     python3-pip \
+    python3-protobuf \
     python3-pyelftools \
     wget \
     linux-headers-$(uname -r) && \
@@ -48,23 +54,17 @@ WORKDIR /root
 
 RUN apt-get update && apt-get install --no-install-recommends -qq -y \
     build-essential \
-    protobuf-compiler \
-    libprotobuf-dev \
-    libprotobuf-c-dev \
-    gdb \
-    cmake \
     pkg-config \
+    libprotobuf-c-dev \
     python3 \
     python3-pip \
     python3-click \
     python3-jinja2 \
     python3-pyelftools \
-    git \
     gnupg \
     ca-certificates \
     curl \
     tzdata \
-    libsodium-dev \
     && apt-get -y -q upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
