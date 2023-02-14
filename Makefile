@@ -10,7 +10,7 @@ endif
 .PHONY: all
 all: python.manifest
 ifeq ($(SGX),1)
-all: python.manifest.sgx python.sig python.token
+all: python.manifest.sgx python.sig
 endif
 
 %.manifest: %.manifest.template
@@ -35,9 +35,6 @@ sgx_outputs: python.manifest
 		--key $(SGX_SIGNER_KEY) \
 		--output python.manifest.sgx \
 		--manifest python.manifest
-
-%.token: %.sig
-	gramine-sgx-get-token --output $@ --sig $<
 
 .PHONY: clean
 clean:

@@ -28,13 +28,9 @@ def run(manifest_path: Path):
     """Read the manifest.sgx to determine the effective enclave size."""
     manifest = toml.load(manifest_path)
 
-    pal_size = 64 * 1024 * 1024 + parse_human_readable(
-        manifest["loader"]["pal_internal_mem_size"]
-    )
     enclave_size = parse_human_readable(manifest["sgx"]["enclave_size"])
 
     print("Declared enclave size:", human_readable_size(enclave_size))
-    print("Gramine internal memory size:", human_readable_size(pal_size))
 
     files_size = 0
     for item in manifest["sgx"]["trusted_files"]:
@@ -46,7 +42,7 @@ def run(manifest_path: Path):
 
     print(
         "Available app memory size:",
-        human_readable_size(enclave_size - pal_size - files_size),
+        human_readable_size(enclave_size - files_size),
     )
 
 

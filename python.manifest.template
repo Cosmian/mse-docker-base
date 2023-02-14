@@ -14,8 +14,6 @@ loader.env.MODULE_PATH = "/mse-app"
 
 loader.argv_src_file = "file:args"
 
-loader.pal_internal_mem_size = "128M"
-
 sys.enable_extra_runtime_domain_names_conf = true
 
 fs.mounts = [
@@ -36,7 +34,7 @@ fs.mounts = [
 sgx.nonpie_binary = true
 sgx.remote_attestation = "dcap"
 sgx.enclave_size = "{{ enclave_size }}"
-sgx.thread_num = 256
+sgx.max_threads = 256
 sgx.isvprodid = 1
 sgx.isvsvn = 10
 
