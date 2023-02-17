@@ -105,7 +105,7 @@ RUN curl -fsSLo $SGX_SDK_INSTALLER https://download.01.org/intel-sgx/sgx-linux/$
     && rm $SGX_SDK_INSTALLER
 
 # Install MSE Enclave library
-RUN pip3 install -U mse-lib-sgx==1.1a1
+RUN pip3 install -U mse-lib-sgx==1.1
 
 WORKDIR /root
 

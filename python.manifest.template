@@ -26,9 +26,9 @@ fs.mounts = [
   { path = "/usr/local/lib", uri = "file:/usr/local/lib" },
   { path = "/tmp", type = "tmpfs" },
   { path = "/tmp/app", uri = "file:{{ app_dir }}/" },
-  { path = "/root", uri = "file:home/", type = "encrypted",  key_name = "_sgx_mrenclave" },
-  { path = "/key", uri = "file:key/", type = "encrypted",  key_name = "_sgx_mrenclave" },
-  { path = "/mse-app", uri = "file:code/", type = "encrypted",  key_name = "_sgx_mrenclave" },
+  { path = "/root", uri = "file:{{ home_dir }}/", type = "encrypted",  key_name = "_sgx_mrenclave" },
+  { path = "/key", uri = "file:{{ key_dir }}/", type = "encrypted",  key_name = "_sgx_mrenclave" },
+  { path = "/mse-app", uri = "file:{{ code_dir }}/", type = "encrypted",  key_name = "_sgx_mrenclave" },
 ]
 
 sgx.nonpie_binary = true

@@ -19,6 +19,9 @@ endif
 		-Darch_libdir=$(ARCH_LIBDIR) \
 		-Denclave_size=$(ENCLAVE_SIZE) \
 		-Dapp_dir=$(APP_DIR) \
+		-Dhome_dir=$(HOME_DIR) \
+		-Dkey_dir=$(KEY_DIR) \
+		-Dcode_dir=$(CODE_DIR) \
 		-Dentrypoint=$(realpath $(shell sh -c "command -v python3")) \
 		$< > $@
 
