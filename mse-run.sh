@@ -46,6 +46,7 @@ set_default_variables() {
     FORCE=0
     TIMEOUT_DATE=""
     UUID=""
+    MANIFEST_SGX="python.manifest.sgx"
 }
 
 parse_args() {
@@ -151,72 +152,81 @@ export PYTHONDONTWRITEBYTECODE=1
 # Other directory for __pycache__ folders
 export PYTHONPYCACHEPREFIX=/tmp
 
-echo "Untar the code..."
-mkdir -p "$APP_DIR"
-tar xvf "$CODE_TARBALL" -C "$APP_DIR"
+# If the manifest exist, ignore all the installation and compilation steps
+# Do it anyways if --force
+if [ ! -f $MANIFEST_SGX -o $FORCE -eq 1 ]; then
+    echo "Untar the code..."
+    mkdir -p "$APP_DIR"
+    tar xvf "$CODE_TARBALL" -C "$APP_DIR"
 
-# Install dependencies
-# /!\ should not be used to verify MRENCLAVE on client side
-# even if you freeze all your dependencies in a requirements.txt file
-# there are side effects and hash digest of some files installed may differ
-if [ -e "$APP_DIR/requirements.txt" ]; then
-    echo "Installing deps..."
-    pip install -r $APP_DIR/requirements.txt
+    # Install dependencies
+    # /!\ should not be used to verify MRENCLAVE on client side
+    # even if you freeze all your dependencies in a requirements.txt file
+    # there are side effects and hash digest of some files installed may differ
+    if [ -e "$APP_DIR/requirements.txt" ]; then
+        echo "Installing deps..."
+        pip install -r $APP_DIR/requirements.txt
+    fi
+
+    # Prepare the certificate if necessary
+    if [ -n "$CERTIFICATE_PATH" ]; then
+        cp "$CERTIFICATE_PATH" "$CERT_PATH"
+    fi
+
+    # Remove previous generated files if exists
+    if [ $FORCE -eq 1 ]; then
+        rm -rf $CODE_DIR $HOME_DIR $KEY_DIR
+    fi
+
+    if [ $NO_SSL -eq 1 ]; then
+        SSL_APP_MODE="--no-ssl"
+        SSL_APP_MODE_VALUE=""
+    elif [ -z "$CERTIFICATE_PATH" ]; then
+        SSL_APP_MODE="--self-signed"
+        SSL_APP_MODE_VALUE="$EXPIRATION_DATE"
+    else
+        SSL_APP_MODE="--certificate"
+        SSL_APP_MODE_VALUE="$CERT_PATH"
+    fi
+
+    # Prepare gramine argv
+    # /!\ no double quote around $SSL_APP_MODE_VALUE which might be empty
+    # otherwise it will be serialized by gramine
+    gramine-argv-serializer "python3" "/usr/local/bin/mse-bootstrap" \
+        "$SSL_APP_MODE" $SSL_APP_MODE_VALUE \
+        "--host" "$HOST" \
+        "--port" "443" \
+        "--app-dir" "$APP_DIR" \
+        "--uuid" "$UUID" \
+        "$APPLICATION" > args
+
+    echo "Generating the enclave..."
+
+    if [ $DRY_RUN -eq 1 ]; then
+        # Generate a dummy key if you just want to get MRENCLAVE
+        gramine-sgx-gen-private-key
+    fi
+
+    # Build the gramine program
+    make clean && make SGX=1 \
+                    DEBUG="$DEBUG" \
+                    ENCLAVE_SIZE="$ENCLAVE_SIZE" \
+                    APP_DIR="$APP_DIR" \
+                    SGX_SIGNER_KEY="$SGX_SIGNER_KEY" \
+                    CODE_DIR="$CODE_DIR" \
+                    HOME_DIR="$HOME_DIR" \
+                    KEY_DIR="$KEY_DIR"
 fi
 
-# Prepare the certificate if necessary
-if [ -n "$CERTIFICATE_PATH" ]; then
-    cp "$CERTIFICATE_PATH" "$CERT_PATH"
+if [ $MEMORY -eq 1 ]; then
+    mse-memory python.manifest.sgx
 fi
-
-# Remove previous generated files if exists
-if [ $FORCE -eq 1 ]; then
-    rm -rf $CODE_DIR $HOME_DIR $KEY_DIR
-fi
-
-if [ $NO_SSL -eq 1 ]; then
-    SSL_APP_MODE="--no-ssl"
-    SSL_APP_MODE_VALUE=""
-elif [ -z "$CERTIFICATE_PATH" ]; then
-    SSL_APP_MODE="--self-signed"
-    SSL_APP_MODE_VALUE="$EXPIRATION_DATE"
-else
-    SSL_APP_MODE="--certificate"
-    SSL_APP_MODE_VALUE="$CERT_PATH"
-fi
-
-# Prepare gramine argv
-# /!\ no double quote around $SSL_APP_MODE_VALUE which might be empty
-# otherwise it will be serialized by gramine
-gramine-argv-serializer "python3" "/usr/local/bin/mse-bootstrap" \
-    "$SSL_APP_MODE" $SSL_APP_MODE_VALUE \
-    "--host" "$HOST" \
-    "--port" "443" \
-    "--app-dir" "$APP_DIR" \
-    "--uuid" "$UUID" \
-    "$APPLICATION" > args
-
-echo "Generating the enclave..."
 
 if [ $DRY_RUN -eq 0 ]; then
     if ! [ -e "/dev/sgx_enclave" ]; then
         echo "You are not running on an sgx machine"
         echo "If you want to compute the MR_ENCLAVE, re-run with --dry-run parameter"
         exit 1
-    fi
-
-    # Build the gramine program
-    make clean && make SGX=1\
-                       DEBUG="$DEBUG"\
-                       ENCLAVE_SIZE="$ENCLAVE_SIZE"\
-                       APP_DIR="$APP_DIR"\
-                       SGX_SIGNER_KEY="$SGX_SIGNER_KEY"\
-                       CODE_DIR="$CODE_DIR"\
-                       HOME_DIR="$HOME_DIR"\
-                       KEY_DIR="$KEY_DIR" 
-
-    if [ $MEMORY -eq 1 ]; then
-        mse-memory python.manifest.sgx
     fi
 
     # Start the enclave
@@ -228,21 +238,5 @@ if [ $DRY_RUN -eq 0 ]; then
         DURATION=$(( TIMEOUT_DATE-NOW ))
         echo "Starting gramine-sgx for $DURATION seconds"
         timeout -k 10 "$DURATION" gramine-sgx ./python || timeout_die
-    fi
-else
-    # Generate a dummy key if you just want to get MRENCLAVE
-    gramine-sgx-gen-private-key
-    # Compile for the output including MRENCLAVE
-    make clean && make SGX=1 \
-                       DEBUG="$DEBUG"\
-                       ENCLAVE_SIZE="$ENCLAVE_SIZE"\
-                       APP_DIR="$APP_DIR"\
-                       SGX_SIGNER_KEY="$SGX_SIGNER_KEY"\
-                       CODE_DIR="$CODE_DIR"\
-                       HOME_DIR="$HOME_DIR"\
-                       KEY_DIR="$KEY_DIR"
-
-    if [ $MEMORY -eq 1 ]; then
-        mse-memory python.manifest.sgx
     fi
 fi
