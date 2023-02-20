@@ -5,6 +5,8 @@ USER root
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /root
 
+ARG KERNEL_VERSION=5.11.0-46-generic
+
 RUN apt-get update && apt-get install --no-install-recommends -qq -y \
     git \
     build-essential \
@@ -26,7 +28,7 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y \
     python3-protobuf \
     python3-pyelftools \
     wget \
-    linux-headers-$(uname -r) && \
+    linux-headers-$KERNEL_VERSION && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     python3 -m pip install 'meson>=0.56' 'tomli>=1.1.0' 'tomli-w>=0.4.0'
@@ -34,7 +36,10 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y \
 # TODO: specify the proper commit to checkout
 RUN git clone https://github.com/gramineproject/gramine
 WORKDIR /root/gramine
-RUN meson setup build/ --buildtype=release -Ddirect=enabled -Dsgx=enabled && \
+RUN meson setup build/ --buildtype=release \
+        -Ddirect=enabled \
+        -Dsgx=enabled \
+        -Dsgx_driver_include_path=/usr/src/linux-headers-$KERNEL_VERSION/arch/x86/include/uapi && \
     ninja -C build/ && \
     ninja -C build/ install
 
