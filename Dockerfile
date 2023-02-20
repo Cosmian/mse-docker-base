@@ -39,7 +39,9 @@ WORKDIR /root/gramine
 RUN meson setup build/ --buildtype=release \
         -Ddirect=enabled \
         -Dsgx=enabled \
-        -Dsgx_driver_include_path=/usr/src/linux-headers-$KERNEL_VERSION/arch/x86/include/uapi && \
+        -Dsgx_driver_include_path=/usr/src/linux-headers-$KERNEL_VERSION/arch/x86/include/uapi \
+        -Dglibc=enabled \
+        -Dmusl=disabled && \
     ninja -C build/ && \
     ninja -C build/ install
 
