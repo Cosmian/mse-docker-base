@@ -2,7 +2,8 @@ loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "{{ entrypoint }}"
 loader.log_level = "{{ log_level }}"
 
-loader.env.LD_LIBRARY_PATH = "{{ python.stdlib }}/lib:/lib:/usr/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}"
+loader.env.LD_LIBRARY_PATH = "/lib:/usr/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}"
+loader.env.PYTHONPATH = "/usr/local/lib/python3.8/site-packages"
 loader.env.PYTHONDONTWRITEBYTECODE = "1"
 loader.env.PYTHONPYCACHEPREFIX = "/tmp"
 loader.env.PYTHONUNBUFFERED = "1"
@@ -19,11 +20,9 @@ sys.enable_extra_runtime_domain_names_conf = true
 fs.mounts = [
   { path = "/lib", uri = "file:{{ gramine.runtimedir() }}" },
   { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
-  { path = "/usr", uri = "file:/usr" },
-  { path = "/etc", uri = "file:/etc" },
+  { path = "{{ entrypoint }}", uri = "file:{{ entrypoint }}" },
   { path = "{{ python.stdlib }}", uri = "file:{{ python.stdlib }}" },
-  { path = "{{ python.distlib }}", uri = "file:{{ python.distlib }}" },
-  { path = "/usr/local/lib", uri = "file:/usr/local/lib" },
+  { path = "/usr/local/lib/python3.8", uri = "file:{{ env.get('VENV', '/usr/local') }}/lib/python3.8" },
   { path = "/tmp", type = "tmpfs" },
   { path = "/tmp/app", uri = "file:{{ app_dir }}/" },
   { path = "/root", uri = "file:{{ home_dir }}/", type = "encrypted",  key_name = "_sgx_mrenclave" },
@@ -45,8 +44,7 @@ sgx.trusted_files = [
   "file:{{ arch_libdir }}/",
   "file:/usr/{{ arch_libdir }}/",
   "file:{{ python.stdlib }}/",
-  "file:{{ python.distlib }}/",
-  "file:{{ python.get_path('stdlib', vars={'installed_base': '/usr/local'}) }}/",
+  "file:{{ env.get('VENV', '/usr/local') }}/lib/python3.8/",
   "file:/etc/apt/apt.conf.d/",
   "file:/etc/nsswitch.conf",
   "file:/etc/group",

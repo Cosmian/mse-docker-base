@@ -196,7 +196,7 @@ if [ ! -f $MANIFEST_SGX -o $FORCE -eq 1 ]; then
     # Prepare gramine argv
     # /!\ no double quote around $SSL_APP_MODE_VALUE which might be empty
     # otherwise it will be serialized by gramine
-    gramine-argv-serializer "python3" "/usr/local/bin/mse-bootstrap" \
+    gramine-argv-serializer "python3" "-S" "/usr/local/bin/mse-bootstrap" \
         "$SSL_APP_MODE" $SSL_APP_MODE_VALUE \
         "--host" "$HOST" \
         "--port" "443" \
@@ -211,8 +211,13 @@ if [ ! -f $MANIFEST_SGX -o $FORCE -eq 1 ]; then
         gramine-sgx-gen-private-key
     fi
 
+    VENV=""
+    if [ -n "$VIRTUAL_ENV" ]; then
+        VENV="VENV=$VIRTUAL_ENV"
+    fi
+
     # Build the gramine program
-    make clean && make SGX=1 \
+    make clean && make SGX=1 $VENV \
                     DEBUG="$DEBUG" \
                     ENCLAVE_SIZE="$ENCLAVE_SIZE" \
                     APP_DIR="$APP_DIR" \
