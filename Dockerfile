@@ -79,7 +79,7 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y \
 RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" >> /etc/apt/sources.list.d/intel-sgx.list \
     && curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
 
-COPY --from=gramine /usr/local/bin/gramine-* /usr/bin/
+COPY --from=gramine /usr/local/bin/gramine-* /usr/local/bin/
 COPY --from=gramine /usr/local/lib/python3.8/dist-packages/graminelibos  /usr/local/lib/python3.8/dist-packages/graminelibos
 COPY --from=gramine /usr/local/lib/x86_64-linux-gnu/gramine/ /usr/local/lib/x86_64-linux-gnu/gramine/
 
