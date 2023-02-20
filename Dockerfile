@@ -68,6 +68,7 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y \
     python3-click \
     python3-jinja2 \
     python3-pyelftools \
+    python3-virtualenv \
     gnupg \
     ca-certificates \
     curl \
@@ -110,6 +111,11 @@ RUN curl -fsSLo $SGX_SDK_INSTALLER https://download.01.org/intel-sgx/sgx-linux/$
     && chmod +x  $SGX_SDK_INSTALLER \
     && echo "yes" | ./$SGX_SDK_INSTALLER \
     && rm $SGX_SDK_INSTALLER
+
+# Configure virtualenv
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install MSE Enclave library
 RUN pip3 install -U mse-lib-sgx==1.1
