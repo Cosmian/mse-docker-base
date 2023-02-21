@@ -158,7 +158,7 @@ export PYTHONPYCACHEPREFIX=/tmp
 
 # If the manifest exist, ignore all the installation and compilation steps
 # Do it anyways if --force
-if [ ! -f $MANIFEST_SGX -o $FORCE -eq 1 ]; then
+if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
     echo "Untar the code..."
     mkdir -p "$APP_DIR"
     tar xvf "$CODE_TARBALL" -C "$APP_DIR"
