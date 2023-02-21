@@ -169,7 +169,14 @@ if [ ! -f $MANIFEST_SGX -o $FORCE -eq 1 ]; then
     # there are side effects and hash digest of some files installed may differ
     if [ -e "$APP_DIR/requirements.txt" ]; then
         echo "Installing deps..."
+        if [ -n "$VIRTUAL_ENV" ]; then
+            # shellcheck source=/dev/null
+            . "$VIRTUAL_ENV/bin/activate"
+        fi
         pip install -r $APP_DIR/requirements.txt
+        if [ -n "$VIRTUAL_ENV" ]; then
+            deactivate
+        fi
     fi
 
     # Prepare the certificate if necessary
@@ -196,7 +203,7 @@ if [ ! -f $MANIFEST_SGX -o $FORCE -eq 1 ]; then
     # Prepare gramine argv
     # /!\ no double quote around $SSL_APP_MODE_VALUE which might be empty
     # otherwise it will be serialized by gramine
-    gramine-argv-serializer "python3" "-S" "/usr/local/bin/mse-bootstrap" \
+    gramine-argv-serializer "/usr/bin/python3" "-S" "/usr/local/bin/mse-bootstrap" \
         "$SSL_APP_MODE" $SSL_APP_MODE_VALUE \
         "--host" "$HOST" \
         "--port" "443" \

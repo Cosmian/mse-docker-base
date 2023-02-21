@@ -116,11 +116,10 @@ RUN curl -fsSLo $SGX_SDK_INSTALLER https://download.01.org/intel-sgx/sgx-linux/$
 
 # Configure virtualenv
 ENV VIRTUAL_ENV=/opt/venv
-RUN python3 -m venv --system-site-packages $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN python3 -m venv $VIRTUAL_ENV
 
 # Install MSE Enclave library
-RUN pip3 install -U mse-lib-sgx==1.1
+RUN . "$VIRTUAL_ENV/bin/activate" && pip install -U mse-lib-sgx==1.1
 
 WORKDIR /root
 
