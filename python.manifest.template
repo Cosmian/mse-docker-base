@@ -22,6 +22,7 @@ fs.mounts = [
   { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
   { path = "{{ entrypoint }}", uri = "file:{{ entrypoint }}" },
   { path = "{{ python.stdlib }}", uri = "file:{{ python.stdlib }}" },
+  { path = "/usr/local/bin/mse-bootstrap", uri = "file:/usr/local/bin/mse-bootstrap" },
   { path = "/usr/local/lib/python3.8", uri = "file:{{ env.get('VENV', '/usr/local') }}/lib/python3.8" },
   { path = "/tmp", type = "tmpfs" },
   { path = "/tmp/app", uri = "file:{{ app_dir }}/" },

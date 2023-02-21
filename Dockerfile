@@ -65,6 +65,8 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y \
     libprotobuf-c-dev \
     python3 \
     python3-pip \
+    python3-cryptography \
+    python3-protobuf \
     python3-click \
     python3-jinja2 \
     python3-pyelftools \
