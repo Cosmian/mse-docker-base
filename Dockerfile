@@ -115,11 +115,11 @@ RUN curl -fsSLo $SGX_SDK_INSTALLER https://download.01.org/intel-sgx/sgx-linux/$
     && rm $SGX_SDK_INSTALLER
 
 # Configure virtualenv
-ENV VIRTUAL_ENV=/opt/venv
-RUN python3 -m venv $VIRTUAL_ENV
+ENV GRAMINE_VENV=/opt/venv
+RUN python3 -m venv $GRAMINE_VENV
 
 # Install MSE Enclave library
-RUN . "$VIRTUAL_ENV/bin/activate" && pip install -U mse-lib-sgx==1.1
+RUN . "$GRAMINE_VENV/bin/activate" && pip install -U mse-lib-sgx==1.1
 
 WORKDIR /root
 

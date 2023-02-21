@@ -169,12 +169,12 @@ if [ ! -f $MANIFEST_SGX -o $FORCE -eq 1 ]; then
     # there are side effects and hash digest of some files installed may differ
     if [ -e "$APP_DIR/requirements.txt" ]; then
         echo "Installing deps..."
-        if [ -n "$VIRTUAL_ENV" ]; then
+        if [ -n "$GRAMINE_VENV" ]; then
             # shellcheck source=/dev/null
-            . "$VIRTUAL_ENV/bin/activate"
+            . "$GRAMINE_VENV/bin/activate"
         fi
         pip install -r $APP_DIR/requirements.txt
-        if [ -n "$VIRTUAL_ENV" ]; then
+        if [ -n "$GRAMINE_VENV" ]; then
             deactivate
         fi
     fi
@@ -219,8 +219,8 @@ if [ ! -f $MANIFEST_SGX -o $FORCE -eq 1 ]; then
     fi
 
     VENV=""
-    if [ -n "$VIRTUAL_ENV" ]; then
-        VENV="VENV=$VIRTUAL_ENV"
+    if [ -n "$GRAMINE_VENV" ]; then
+        VENV="GRAMINE_VENV=$GRAMINE_VENV"
     fi
 
     # Build the gramine program
