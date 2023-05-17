@@ -3,9 +3,9 @@
 set -e
 
 usage() {
-    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --self-signed <expiration_timestamp> | --no-ssl) --code <tarball_path> --host <host> --application <module:application> --uuid <uuid> [--timeout <timeout_timestamp>] [--dry-run] [--memory] "
+    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --ratls <expiration_timestamp> | --no-ssl) --code <tarball_path> --host <host> --application <module:application> --uuid <uuid> [--timeout <timeout_timestamp>] [--dry-run] [--memory] "
     echo ""
-    echo "Example (1): $0 --size 8G --code /tmp/app.tar --self-signed 1669155711 --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
+    echo "Example (1): $0 --size 8G --code /tmp/app.tar --ratls 1669155711 --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
     echo ""
     echo "Example (2): $0 --size 8G --code /tmp/app.tar --certificate /tmp/cert.pem --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
     echo ""
@@ -35,7 +35,8 @@ set_default_variables() {
     ENCLAVE_SIZE=""
     EXPIRATION_DATE=""
     NO_SSL=0
-    HOST=""
+    HOST="0.0.0.0"
+    PORT="443"
     CODE_TARBALL=""
     APPLICATION=""
     CERTIFICATE_PATH=""
@@ -48,8 +49,10 @@ set_default_variables() {
     DRY_RUN=0
     MEMORY=0
     FORCE=0
-    TIMEOUT_DATE=""
-    UUID=""
+    TIMEOUT=""
+    ID=""
+    SUBJECT="CN=cosmian.app,O=Cosmian Tech,C=FR,L=Paris,ST=Ile-de-France"
+    SUBJECT_ALTERNATIVE_NAME="localhost"
     MANIFEST_SGX="python.manifest.sgx"
 }
 
@@ -70,7 +73,7 @@ parse_args() {
             shift # past value
             ;;
 
-            --self-signed)
+            --ratls)
             EXPIRATION_DATE="$2"
             shift # past argument
             shift # past value
@@ -93,20 +96,38 @@ parse_args() {
             shift # past value
             ;;
 
+            --port)
+            PORT="$2"
+            shift # past argument
+            shift # past value
+            ;;
+
             --application)
             APPLICATION="$2"
             shift # past argument
             shift # past value
             ;;
 
-            --uuid)
-            UUID="$2"
+            --id)
+            ID="$2"
+            shift # past argument
+            shift # past value
+            ;;
+
+            --subject)
+            SUBJECT="$2"
+            shift # past argument
+            shift # past value
+            ;;
+
+            --san)
+            SUBJECT_ALTERNATIVE_NAME="$2"
             shift # past argument
             shift # past value
             ;;
 
             --timeout)
-            TIMEOUT_DATE="$2"
+            TIMEOUT="$2"
             shift # past argument
             shift # past value
             ;;
@@ -193,7 +214,7 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
         SSL_APP_MODE="--no-ssl"
         SSL_APP_MODE_VALUE=""
     elif [ -z "$CERTIFICATE_PATH" ]; then
-        SSL_APP_MODE="--self-signed"
+        SSL_APP_MODE="--ratls"
         SSL_APP_MODE_VALUE="$EXPIRATION_DATE"
     else
         SSL_APP_MODE="--certificate"
@@ -206,9 +227,12 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
     gramine-argv-serializer "/usr/bin/python3" "-S" "/usr/local/bin/mse-bootstrap" \
         "$SSL_APP_MODE" $SSL_APP_MODE_VALUE \
         "--host" "$HOST" \
-        "--port" "443" \
+        "--port" "$PORT" \
         "--app-dir" "$APP_DIR" \
-        "--uuid" "$UUID" \
+        "--subject" "$SUBJECT" \
+        "--san" "$SUBJECT_ALTERNATIVE_NAME" \
+        "--id" "$ID" \
+        "--timeout" "$TIMEOUT" \
         "$APPLICATION" > args
 
     echo "Generating the enclave..."
@@ -246,13 +270,5 @@ if [ $DRY_RUN -eq 0 ]; then
     fi
 
     # Start the enclave
-    if [ -z "$TIMEOUT_DATE" ]; then
-        # Forever
-        gramine-sgx ./python
-    else
-        NOW=$(date +"%s")
-        DURATION=$(( TIMEOUT_DATE-NOW ))
-        echo "Starting gramine-sgx for $DURATION seconds"
-        timeout -k 10 "$DURATION" gramine-sgx ./python || timeout_die
-    fi
+    gramine-sgx ./python
 fi
