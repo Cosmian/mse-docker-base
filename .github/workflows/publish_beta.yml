@@ -1,9 +1,15 @@
 name: MSE base docker image BETA
 
 on:
-  pull_request:
-    branches:
+  push:
+    # Run on every branches which will be merged
+    branches-ignore:
+      - master
       - main
+      - release
+      - develop
+    tags-ignore:
+      - "**"
 
 env:
   REGISTRY: ghcr.io

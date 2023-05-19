@@ -1,9 +1,18 @@
 name: MSE base docker image
 
 on:
-  push:
+  # Only run when pull request is closed and merged into main/develop
+  pull_request:
     branches:
-      - '*'
+      - main
+    types:
+      - closed
+  # Do not run on push
+  push:
+    branches-ignore:
+      - "**"
+    tags-ignore:
+      - "**"
 
 env:
   REGISTRY: ghcr.io

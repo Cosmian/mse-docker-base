@@ -158,7 +158,7 @@ parse_args() {
         esac
     done
 
-    if [ -z "$ENCLAVE_SIZE" ] || [ -z "$CODE_TARBALL" ] || [ -z "$HOST" ] || [ -z "$APPLICATION" ] || [ -z "$UUID" ]
+    if [ -z "$ENCLAVE_SIZE" ] || [ -z "$CODE_TARBALL" ] || [ -z "$HOST" ] || [ -z "$APPLICATION" ] || [ -z "$ID" ]
     then
         usage
     fi
