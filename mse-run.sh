@@ -3,7 +3,7 @@
 set -e
 
 usage() {
-    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --ratls <expiration_timestamp> | --no-ssl) --code <tarball_path> --host <host> --application <module:application> --uuid <uuid> [--timeout <timeout_timestamp>] [--dry-run] [--memory] "
+    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --ratls <expiration_timestamp> | --no-ssl) --code <tarball_path> --host <host> --application <module:application> --uuid <uuid> [--timeout <timeout_timestamp>] [--plaincode]  [--dry-run] [--memory] "
     echo ""
     echo "Example (1): $0 --size 8G --code /tmp/app.tar --ratls 1669155711 --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
     echo ""
@@ -15,8 +15,9 @@ usage() {
     echo -e "\t--debug      put the enclave in debug mode"
     echo -e "\t--dry-run    allow to compute MRENCLAVE value from a non-sgx machine"
     echo -e "\t--force      regenerate and recompile files if they are already existed from another enclave"
+    echo -e "\t--plaincode  whether the code is plain or encrypted"
     echo -e "\t--memory     print the memory usage"
-    echo -e "\t--timeout    stop the enclave after this delay"
+    echo -e "\t--timeout    stop the configuration server after this delay"
 
     exit 1
 }
@@ -32,6 +33,7 @@ timeout_die() {
 
 set_default_variables() {
     DEBUG=0
+    PLAINCODE=0
     ENCLAVE_SIZE=""
     EXPIRATION_DATE=""
     NO_SSL=0
@@ -137,6 +139,11 @@ parse_args() {
             shift # past argument
             ;;
 
+            --plaincode)
+            PLAINCODE=1
+            shift # past argument
+            ;;
+
             --memory)
             MEMORY=1
             shift # past argument
@@ -221,6 +228,11 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
         SSL_APP_MODE_VALUE="$CERT_PATH"
     fi
 
+    CODE_MODE=""
+    if [ $PLAINCODE -eq 1 ]; then
+        CODE_MODE="--plaincode"
+    fi
+
     # Prepare gramine argv
     # /!\ no double quote around $SSL_APP_MODE_VALUE which might be empty
     # otherwise it will be serialized by gramine
@@ -233,6 +245,7 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
         "--san" "$SUBJECT_ALTERNATIVE_NAME" \
         "--id" "$ID" \
         "--timeout" "$TIMEOUT" \
+        $CODE_MODE \
         "$APPLICATION" > args
 
     echo "Generating the enclave..."
