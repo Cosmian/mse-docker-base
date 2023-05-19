@@ -3,7 +3,7 @@
 set -e
 
 usage() {
-    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --ratls <expiration_timestamp> | --no-ssl) --code <tarball_path> --host <host> --application <module:application> --uuid <uuid> [--timeout <timeout_timestamp>] [--plaincode]  [--dry-run] [--memory] "
+    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --ratls <expiration_timestamp> | --no-ssl) --code <tarball_path> --host <host> --application <module:application> --uuid <uuid> [--timeout <seconds>] [--plaincode]  [--dry-run] [--memory] "
     echo ""
     echo "Example (1): $0 --size 8G --code /tmp/app.tar --ratls 1669155711 --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
     echo ""
@@ -17,18 +17,9 @@ usage() {
     echo -e "\t--force      regenerate and recompile files if they are already existed from another enclave"
     echo -e "\t--plaincode  whether the code is plain or encrypted"
     echo -e "\t--memory     print the memory usage"
-    echo -e "\t--timeout    stop the configuration server after this delay"
+    echo -e "\t--timeout    stop the configuration server after this delay (in seconds)"
 
     exit 1
-}
-
-timeout_die() {
-    STATUS=$?
-    if [ $STATUS -ge 124 ]; then
-        exit 0
-    else
-        exit $STATUS
-    fi
 }
 
 set_default_variables() {
@@ -189,7 +180,7 @@ export PYTHONPYCACHEPREFIX=/tmp
 if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
     echo "Untar the code..."
     mkdir -p "$APP_DIR"
-    tar xvf "$CODE_TARBALL" -C "$APP_DIR"
+    tar xvf "$CODE_TARBALL" -C "$APP_DIR" --no-same-owner
 
     # Install dependencies
     # /!\ should not be used to verify MRENCLAVE on client side
@@ -233,6 +224,11 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
         CODE_MODE="--plaincode"
     fi
 
+    TIMEOUT_MODE=""
+    if [ -n "$TIMEOUT" ]; then
+        TIMEOUT_MODE="--timeout"
+    fi
+
     # Prepare gramine argv
     # /!\ no double quote around $SSL_APP_MODE_VALUE which might be empty
     # otherwise it will be serialized by gramine
@@ -244,7 +240,7 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
         "--subject" "$SUBJECT" \
         "--san" "$SUBJECT_ALTERNATIVE_NAME" \
         "--id" "$ID" \
-        "--timeout" "$TIMEOUT" \
+        $TIMEOUT_MODE $TIMEOUT \
         $CODE_MODE \
         "$APPLICATION" > args
 
