@@ -37,11 +37,11 @@ RUN git clone https://github.com/gramineproject/gramine
 WORKDIR /root/gramine
 RUN git checkout cd6a9cca9585110a9bcd5c63dcc75b5c4d49466b && \
     meson setup build/ --buildtype=release \
-        -Ddirect=enabled \
-        -Dsgx=enabled \
-        -Dsgx_driver_include_path=/usr/src/linux-headers-$KERNEL_VERSION/arch/x86/include/uapi \
-        -Dglibc=enabled \
-        -Dmusl=disabled && \
+    -Ddirect=enabled \
+    -Dsgx=enabled \
+    -Dsgx_driver_include_path=/usr/src/linux-headers-$KERNEL_VERSION/arch/x86/include/uapi \
+    -Dglibc=enabled \
+    -Dmusl=disabled && \
     ninja -C build/ && \
     ninja -C build/ install
 
@@ -85,6 +85,7 @@ RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu foc
     && curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
 
 COPY --from=gramine /usr/local/bin/gramine-* /usr/local/bin/
+COPY --from=gramine /usr/local/lib/python3.8/dist-packages/_graminelibos_offsets.py /usr/local/lib/python3.8/dist-packages/_graminelibos_offsets.py
 COPY --from=gramine /usr/local/lib/python3.8/dist-packages/graminelibos  /usr/local/lib/python3.8/dist-packages/graminelibos
 COPY --from=gramine /usr/local/lib/x86_64-linux-gnu/gramine/ /usr/local/lib/x86_64-linux-gnu/gramine/
 
