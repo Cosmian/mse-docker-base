@@ -3,16 +3,19 @@
 set -e
 
 usage() {
-    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --ratls <expiration_timestamp> | --no-ssl) --code <tarball_path> --host <host> --application <module:application> --uuid <uuid> [--timeout <seconds>] [--dry-run] [--memory] "
+    echo "mse-run usage: $0 --size <size> (--certificate <cert.pem> | --ratls <expiration_timestamp> | --no-ssl) --code <tarball_path> --san <domain_name> --application <module:application> --id <uuid> [--host <host>] [--port <port>] [--subject <subject>] [--timeout <seconds>] [--dry-run] [--memory] "
     echo ""
-    echo "Example (1): $0 --size 8G --code /tmp/app.tar --ratls 1669155711 --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
+    echo "Example (1): $0 --size 8G --code /tmp/app.tar --ratls 1669155711 --san localhost --application app:app --id 533a2b83-4bc5-4a9c-955e-208c530bfd15"
     echo ""
-    echo "Example (2): $0 --size 8G --code /tmp/app.tar --certificate /tmp/cert.pem --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
+    echo "Example (2): $0 --size 8G --code /tmp/app.tar --certificate /tmp/cert.pem --san localhost --application app:app --id 533a2b83-4bc5-4a9c-955e-208c530bfd15"
     echo ""
-    echo "Example (3): $0 --size 8G --code /tmp/app.tar --no-ssl --host localhost --application app:app --uuid 533a2b83-4bc5-4a9c-955e-208c530bfd15"
+    echo "Example (3): $0 --size 8G --code /tmp/app.tar --no-ssl --san localhost --application app:app --id 533a2b83-4bc5-4a9c-955e-208c530bfd15"
     echo ""
     echo "Arguments:"
     echo -e "\t--debug      put the enclave in debug mode"
+    echo -e "\t--host       set the server host (default: $HOST)"
+    echo -e "\t--port       set the server port (default: $PORT)"
+    echo -e "\t--subject    set the ratls certificat subject as an RFC 4514 string (default: $SUBJECT)"
     echo -e "\t--dry-run    allow to compute MRENCLAVE value from a non-sgx machine"
     echo -e "\t--force      regenerate and recompile files if they are already existed from another enclave"
     echo -e "\t--memory     print the memory usage"
@@ -22,29 +25,33 @@ usage() {
 }
 
 set_default_variables() {
-    DEBUG=0
-    PLAINCODE=0
+    # Mandatory args (initialized empty)
     ENCLAVE_SIZE=""
     EXPIRATION_DATE=""
     NO_SSL=0
-    HOST="0.0.0.0"
-    PORT="443"
     CODE_TARBALL=""
     APPLICATION=""
     CERTIFICATE_PATH=""
+    TIMEOUT=""
+    ID=""
+    SUBJECT_ALTERNATIVE_NAME=""
+
+    # Optional args
+    DEBUG=0
+    DRY_RUN=0
+    MEMORY=0
+    FORCE=0
+    HOST="0.0.0.0"
+    PORT="443"
+    SUBJECT="CN=cosmian.app,O=Cosmian Tech,C=FR,L=Paris,ST=Ile-de-France"
+
+    # Constant variables
     APP_DIR="/tmp/app"
     CERT_PATH="$APP_DIR/fullchain.pem"
     SGX_SIGNER_KEY="$HOME/.config/gramine/enclave-key.pem"
     CODE_DIR="code"
     HOME_DIR="home"
     KEY_DIR="key"
-    DRY_RUN=0
-    MEMORY=0
-    FORCE=0
-    TIMEOUT=""
-    ID=""
-    SUBJECT="CN=cosmian.app,O=Cosmian Tech,C=FR,L=Paris,ST=Ile-de-France"
-    SUBJECT_ALTERNATIVE_NAME="$HOST"
     MANIFEST_SGX="python.manifest.sgx"
 }
 
@@ -150,7 +157,7 @@ parse_args() {
         esac
     done
 
-    if [ -z "$ENCLAVE_SIZE" ] || [ -z "$CODE_TARBALL" ] || [ -z "$HOST" ] || [ -z "$APPLICATION" ] || [ -z "$ID" ]
+    if [ -z "$ENCLAVE_SIZE" ] || [ -z "$CODE_TARBALL" ] || [ -z "$SUBJECT_ALTERNATIVE_NAME" ] || [ -z "$APPLICATION" ] || [ -z "$ID" ]
     then
         usage
     fi
