@@ -54,6 +54,7 @@ export TMP_PATH=/tmp
 export HOME=/root
 export KEY_PATH=/key
 export SECRETS_PATH=/root/.cache/mse/secrets.json
+export SEALED_SECRETS_PATH="/root/.cache/mse/sealed_secrets.json"
 export MODULE_PATH=/mse-app
 
 mkdir "$KEY_PATH"
