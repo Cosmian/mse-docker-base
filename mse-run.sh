@@ -44,7 +44,7 @@ set_default_variables() {
     TIMEOUT=""
     ID=""
     SUBJECT="CN=cosmian.app,O=Cosmian Tech,C=FR,L=Paris,ST=Ile-de-France"
-    SUBJECT_ALTERNATIVE_NAME="localhost"
+    SUBJECT_ALTERNATIVE_NAME="$HOST"
     MANIFEST_SGX="python.manifest.sgx"
 }
 
