@@ -212,12 +212,15 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
     if [ $NO_SSL -eq 1 ]; then
         SSL_APP_MODE="--no-ssl"
         SSL_APP_MODE_VALUE=""
+        SSL_INPUT_ARGS=""
     elif [ -z "$CERTIFICATE_PATH" ]; then
         SSL_APP_MODE="--ratls"
         SSL_APP_MODE_VALUE="$EXPIRATION_DATE"
+        SSL_INPUT_ARGS=",\"expiration_date\":\"$EXPIRATION_DATE\""
     else
         SSL_APP_MODE="--certificate"
         SSL_APP_MODE_VALUE="$CERT_PATH"
+        SSL_INPUT_ARGS=",\"app_cert\":\"$CERT_PATH\""
     fi
 
     TIMEOUT_MODE=""
@@ -250,6 +253,15 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
     if [ -n "$GRAMINE_VENV" ]; then
         VENV="GRAMINE_VENV=$GRAMINE_VENV"
     fi
+
+    # Serialize input arguments
+    INPUT_ARGS="{\"size\":\"$ENCLAVE_SIZE\",\
+        \"host\":\"$HOST\",\
+        \"app_id\":\"$ID\",\
+        \"application\":\"$APPLICATION\"\
+        $SSL_INPUT_ARGS}"
+
+    echo $INPUT_ARGS > input_args
 
     # Build the gramine program
     make clean && make SGX=1 $VENV \
