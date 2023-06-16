@@ -212,15 +212,12 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
     if [ $NO_SSL -eq 1 ]; then
         SSL_APP_MODE="--no-ssl"
         SSL_APP_MODE_VALUE=""
-        SSL_INPUT_ARGS=""
     elif [ -z "$CERTIFICATE_PATH" ]; then
         SSL_APP_MODE="--ratls"
         SSL_APP_MODE_VALUE="$EXPIRATION_DATE"
-        SSL_INPUT_ARGS=",\"expiration_date\":\"$EXPIRATION_DATE\""
     else
         SSL_APP_MODE="--certificate"
         SSL_APP_MODE_VALUE="$CERT_PATH"
-        SSL_INPUT_ARGS=",\"app_cert\":\"$CERT_PATH\""
     fi
 
     TIMEOUT_MODE=""
@@ -255,12 +252,36 @@ if [ ! -f $MANIFEST_SGX ] || [ $FORCE -eq 1 ]; then
     fi
 
     # Serialize input arguments
-    INPUT_ARGS="{\"size\":\"$ENCLAVE_SIZE\",\
-        \"host\":\"$HOST\",\
-        \"app_id\":\"$ID\",\
-        \"application\":\"$APPLICATION\"\
-        $SSL_INPUT_ARGS}"
-
+    if [ $NO_SSL -eq 1 ]; then
+        INPUT_ARGS=$(
+            jq --null-input \
+                --arg size "${$ENCLAVE_SIZE}" \
+                --arg host "${$HOST}" \
+                --arg app_id "${$ID}" \
+                --arg application "${APPLICATION}" \
+                '$ARGS.named'
+        )
+    elif [ -z "$CERTIFICATE_PATH" ]; then
+        INPUT_ARGS=$(
+            jq --null-input \
+                --arg size "${$ENCLAVE_SIZE}" \
+                --arg host "${$HOST}" \
+                --arg app_id "${$ID}" \
+                --arg application "${APPLICATION}" \
+                --arg expiration_date "${EXPIRATION_DATE}" \
+                '$ARGS.named'
+        )
+    else
+        INPUT_ARGS=$(
+            jq --null-input \
+                --arg size "${$ENCLAVE_SIZE}" \
+                --arg host "${$HOST}" \
+                --arg app_id "${$ID}" \
+                --arg application "${APPLICATION}" \
+                --arg app_cert "${CERT_PATH}" \
+                '$ARGS.named'
+        )
+    fi
     echo $INPUT_ARGS > input_args
 
     # Build the gramine program

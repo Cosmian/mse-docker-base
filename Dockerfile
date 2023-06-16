@@ -75,6 +75,7 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y \
     ca-certificates \
     curl \
     tzdata \
+    jq \
     && apt-get -y -q upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
