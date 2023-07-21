@@ -89,10 +89,17 @@ COPY --from=gramine-build /usr/local/bin/gramine-* /usr/local/bin/
 COPY --from=gramine-build /usr/local/lib/python3.10/dist-packages/graminelibos  /usr/local/lib/python3.10/dist-packages/graminelibos
 COPY --from=gramine-build /usr/local/lib/x86_64-linux-gnu/gramine/ /usr/local/lib/x86_64-linux-gnu/gramine/
 
+# Ubuntu focal-security repository
+RUN echo "deb http://security.ubuntu.com/ubuntu focal-security main" | tee /etc/apt/sources.list.d/focal-security.list
+
 # Intel SGX APT repository
 RUN curl -fsSLo /usr/share/keyrings/intel-sgx-deb.asc https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key && \
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx-deb.asc] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" \
     | tee /etc/apt/sources.list.d/intel-sgx.list
+
+# Microsoft APT repository
+RUN echo "deb [arch=amd64] https://packages.microsoft.com/ubuntu/20.04/prod focal main" >> /etc/apt/sources.list.d/microsoft.list \
+  && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 
 # Install Intel SGX dependencies and Gramine
 RUN apt-get update && apt-get install -y \
@@ -103,7 +110,8 @@ RUN apt-get update && apt-get install -y \
     libsgx-dcap-ql \
     libsgx-dcap-quote-verify \
     linux-base-sgx \
-    libsgx-dcap-default-qpl \
+    libssl1.1 \
+    az-dcap-client \
     sgx-aesm-service \
     libsgx-aesm-quote-ex-plugin && \
     rm -rf /var/lib/apt/lists/*

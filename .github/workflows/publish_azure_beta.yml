@@ -2,28 +2,20 @@ name: MSE base docker image BETA
 
 on:
   push:
-    # Run on every branches which will be merged
-    branches-ignore:
-      - master
-      - main
-      - release
-      - develop
-      - azure-dcap
-    tags-ignore:
-      - "**"
-
+    branches:
+      - 'azure-dcap*'
 env:
   REGISTRY: ghcr.io
 
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       packages: write
       contents: read
     env:
-      IMAGE: ghcr.io/cosmian/mse-base-beta
+      IMAGE: ghcr.io/cosmian/mse-base-azure-beta
 
     steps:
       - name: Checkout
