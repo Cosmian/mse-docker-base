@@ -39,7 +39,7 @@ set_default_variables() {
     FORCE=0
     HOST="0.0.0.0"
     PORT="443"
-    SUBJECT="CN=cosmian.app,O=Cosmian Tech,C=FR,L=Paris,ST=Ile-de-France"
+    SUBJECT="CN=cosmian.io,O=Cosmian Tech,C=FR,L=Paris,ST=Ile-de-France"
 
     # Constant variables
     PACKAGE_DIR="/opt/input" # Location of the src package

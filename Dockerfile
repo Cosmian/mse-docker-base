@@ -70,7 +70,7 @@ RUN python3 -m venv $GRAMINE_VENV
 # Install MSE Enclave library
 RUN . "$GRAMINE_VENV/bin/activate" && \
     python3 -m pip install -U pip setuptools && \
-    python3 -m pip install -U mse-lib-sgx==2.0
+    python3 -m pip install -U mse-lib-sgx==3.0a1
 
 WORKDIR /root
 
